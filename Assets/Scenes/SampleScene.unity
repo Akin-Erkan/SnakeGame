@@ -399,7 +399,7 @@ GameObject:
   - component: {fileID: 260315668}
   - component: {fileID: 260315667}
   m_Layer: 0
-  m_Name: Panel
+  m_Name: MovementInputPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -960,7 +960,7 @@ GameObject:
   - component: {fileID: 504431445}
   - component: {fileID: 504431444}
   m_Layer: 0
-  m_Name: Canvas
+  m_Name: MovementInputCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1204,7 +1204,7 @@ GameObject:
   - component: {fileID: 668902643}
   - component: {fileID: 668902644}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: MovementInputHandler
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

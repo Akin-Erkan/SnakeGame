@@ -1,8 +1,10 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using SnakeGameScripts.InputScripts;
+using SnakeGameScripts.LevelControls;
 
 namespace SnakeGameScripts.SnakeScripts
 {
@@ -25,6 +27,7 @@ namespace SnakeGameScripts.SnakeScripts
         private List<SnakeBodyPartHandler> _snakeBodyPartHandlers;
 
         private MovementInputHandler _movementInputHandler;
+        private LevelDesigner _levelDesigner;
 
         private float _currentSnakeSpeed = 0.5f;
         
@@ -33,6 +36,7 @@ namespace SnakeGameScripts.SnakeScripts
             FindSnakeHead();
             FindSnakeBodyParts();
             FindMovementInputHandler();
+            FindLevelDesign();
             SetStartBodyDirections(movementStartDirection);
             SubscribeToMovementInputs();
         }
@@ -45,6 +49,7 @@ namespace SnakeGameScripts.SnakeScripts
         private void FindSnakeHead() => _snakeHeadPartHandler = FindObjectOfType<SnakeHeadPartHandler>();
         private void FindSnakeBodyParts() => _snakeBodyPartHandlers = FindObjectsOfType<SnakeBodyPartHandler>().OrderBy(sp =>sp.currentPartIndex).ToList();
         private void FindMovementInputHandler() => _movementInputHandler = FindObjectOfType<MovementInputHandler>();
+        private void FindLevelDesign() => _levelDesigner = FindObjectOfType<LevelDesigner>();
 
         private void SetStartBodyDirections(Direction startDirection)
         {
@@ -95,16 +100,28 @@ namespace SnakeGameScripts.SnakeScripts
             switch (_headDirection)
             {
                 case Direction.South:
-                    _snakeHeadPartHandler.transform.position += Vector3.back;
+                    if ((Math.Abs(_snakeHeadPartHandler.transform.position.z - _levelDesigner.lowerBorderRestrictionPoint) < 1.25f))
+                        _snakeHeadPartHandler.transform.position = new Vector3(_snakeHeadPartHandler.transform.position.x, _snakeHeadPartHandler.transform.position.y, _levelDesigner.upperBorderRestrictionPoint - 1);
+                    else
+                        _snakeHeadPartHandler.transform.position += Vector3.back;
                     break;
                 case Direction.North:
-                    _snakeHeadPartHandler.transform.position += Vector3.forward;
+                    if ((Math.Abs(_snakeHeadPartHandler.transform.position.z - _levelDesigner.upperBorderRestrictionPoint) < 1.25f))
+                        _snakeHeadPartHandler.transform.position = new Vector3(_snakeHeadPartHandler.transform.position.x,  _snakeHeadPartHandler.transform.position.y, _levelDesigner.lowerBorderRestrictionPoint + 1);
+                    else
+                        _snakeHeadPartHandler.transform.position += Vector3.forward;                    
                     break;
                 case Direction.West:
-                    _snakeHeadPartHandler.transform.position += Vector3.left;
+                    if (Math.Abs(_snakeHeadPartHandler.transform.position.x - _levelDesigner.leftBorderRestrictionPoint) < 1.25f)
+                        _snakeHeadPartHandler.transform.position = new Vector3(_levelDesigner.rightBorderRestrictionPoint-1, _snakeHeadPartHandler.transform.position.y, _snakeHeadPartHandler.transform.position.z);
+                    else
+                        _snakeHeadPartHandler.transform.position += Vector3.left;                    
                     break;
                 case Direction.East:
-                    _snakeHeadPartHandler.transform.position += Vector3.right;
+                    if (Math.Abs(_snakeHeadPartHandler.transform.position.x - _levelDesigner.rightBorderRestrictionPoint) < 1.25f)
+                        _snakeHeadPartHandler.transform.position = new Vector3(_levelDesigner.leftBorderRestrictionPoint+1, _snakeHeadPartHandler.transform.position.y, _snakeHeadPartHandler.transform.position.z);
+                    else
+                        _snakeHeadPartHandler.transform.position += Vector3.right;                       
                     break;
             }
 

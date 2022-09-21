@@ -1,4 +1,3 @@
-using System;
 using SnakeGameScripts.SnakeScripts;
 using UnityEngine;
 using UnityEngine.UI;
