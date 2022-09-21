@@ -29,7 +29,7 @@ namespace SnakeGameScripts.SnakeScripts
         private MovementInputHandler _movementInputHandler;
         private LevelDesigner _levelDesigner;
 
-        private float _currentSnakeSpeed = 0.5f;
+        private float _currentSnakeSpeed = 0.25f;
         
         private void Awake()
         {
