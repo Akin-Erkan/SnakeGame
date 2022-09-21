@@ -22,11 +22,11 @@ namespace SnakeGameScripts.SnakeScripts
         private Direction _tailDirection;
 
         private SnakeHeadPartHandler _snakeHeadPartHandler;
-        private Stack<SnakeBodyPartHandler> _snakeBodyPartHandlers;
+        private List<SnakeBodyPartHandler> _snakeBodyPartHandlers;
 
         private MovementInputHandler _movementInputHandler;
 
-        private float _currentSnakeSpeed = 0.2f;
+        private float _currentSnakeSpeed = 0.5f;
         
         private void Awake()
         {
@@ -43,7 +43,7 @@ namespace SnakeGameScripts.SnakeScripts
         }
 
         private void FindSnakeHead() => _snakeHeadPartHandler = FindObjectOfType<SnakeHeadPartHandler>();
-        private void FindSnakeBodyParts() => _snakeBodyPartHandlers = new Stack<SnakeBodyPartHandler>(FindObjectsOfType<SnakeBodyPartHandler>().OrderBy(sp =>sp.currentPartIndex));
+        private void FindSnakeBodyParts() => _snakeBodyPartHandlers = FindObjectsOfType<SnakeBodyPartHandler>().OrderBy(sp =>sp.currentPartIndex).ToList();
         private void FindMovementInputHandler() => _movementInputHandler = FindObjectOfType<MovementInputHandler>();
 
         private void SetStartBodyDirections(Direction startDirection)
@@ -83,6 +83,15 @@ namespace SnakeGameScripts.SnakeScripts
         private IEnumerator StartSnakeMovementControlCoroutine()
         {
             yield return new WaitForSeconds(_currentSnakeSpeed);
+            if (_snakeBodyPartHandlers.Count > 2)
+            {
+                for (int i = _snakeBodyPartHandlers.Count-1; i > 0; i--)
+                {
+                    _snakeBodyPartHandlers[i].transform.position = _snakeBodyPartHandlers[i - 1].transform.position;
+                }
+            }
+            if (_snakeBodyPartHandlers[0])
+                _snakeBodyPartHandlers[0].transform.position = _snakeHeadPartHandler.transform.position;
             switch (_headDirection)
             {
                 case Direction.South:
