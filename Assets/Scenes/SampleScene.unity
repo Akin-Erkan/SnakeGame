@@ -1970,7 +1970,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a06ef27b3cf7dd408a830918fcd6af9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  edibleElementInstance: {fileID: 0}
+  edibleElementInstance: {fileID: 1385350877}
 --- !u!1 &1069145830
 GameObject:
   m_ObjectHideFlags: 0
