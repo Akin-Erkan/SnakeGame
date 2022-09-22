@@ -1,3 +1,5 @@
+using System;
+
 namespace SnakeGameScripts.SnakeScripts
 {
     /// <summary>
@@ -6,6 +8,13 @@ namespace SnakeGameScripts.SnakeScripts
     public class SnakeBodyPartHandler : SnakePartHandler
     {
         public int currentPartIndex;
+        public static Action<SnakeBodyPartHandler> OnSnakeBodyInstantiated;
 
+        protected override void Awake()
+        {
+            base.Awake();
+            OnSnakeBodyInstantiated?.Invoke(this);
+        }
+        
     }
 }

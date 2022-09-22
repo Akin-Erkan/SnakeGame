@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace SnakeGameScripts.SnakeScripts
+namespace SnakeGameScripts.EdibleElements
 {
-    public class SnakePartHandler : MonoBehaviour
+    public class EdibleElementBase : MonoBehaviour
     {
         protected virtual void Awake()
         {
@@ -17,13 +17,12 @@ namespace SnakeGameScripts.SnakeScripts
             OnEnableSetColor();
         }
 
-        /// <summary>
-        /// We are setting body color whenever enabled because we need to change head and tail in gameplay.
-        /// </summary>
+
         protected virtual void OnEnableSetColor()
         {
             var mat = GetComponent<MeshRenderer>().material;
             mat.color = partColor;
         }
+
     }
 }
