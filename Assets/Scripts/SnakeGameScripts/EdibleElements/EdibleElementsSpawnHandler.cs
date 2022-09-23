@@ -4,19 +4,20 @@ using System.Linq;
 using SnakeGameScripts.LevelControls;
 using SnakeGameScripts.SnakeScripts;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace SnakeGameScripts.EdibleElements
 {
     public class EdibleElementsSpawnHandler : MonoBehaviour
     {
         private List<SnakeBodyPartHandler> _snakeBodyPartHandlers = new();
-        private SnakeHeadPartHandler _snakeHeadPartHandler;
-        private LevelDesigner _levelDesigner;
         private List<GameObject> _edibleElements = new();
-
+        private List<SlotObject> _slotObjects = new();
         [SerializeField]
         private GameObject edibleElementInstance;
+        [SerializeField]
+        private GameObject edibleParent;
+
+        private SnakeController _snakeController;
         
         private enum EdibleElements
         {
@@ -27,21 +28,32 @@ namespace SnakeGameScripts.EdibleElements
             ReverseSnake
         }
 
-        private void Awake()
+        private void Start()
         {
-            FindSnakeHead();
+            FindSnakeController();
             FindSnakeBodyParts();
-            FindLevelDesign();
+            FindSlotObjects();
             SubscribeBodyPartOnInstantiate();
-            InvokeRepeating(nameof(CreateRandomEdibleElement),0,2f);
+            SubscribeSnakeControllerGameOverAction();
+            InvokeRepeating(nameof(CreateRandomEdibleElement),2f,5f);
         }
         
 
-        private void FindSnakeHead() => _snakeHeadPartHandler = FindObjectOfType<SnakeHeadPartHandler>();
+        private void FindSnakeController() => _snakeController = FindObjectOfType<SnakeController>();
+
         private void FindSnakeBodyParts() => _snakeBodyPartHandlers = FindObjectsOfType<SnakeBodyPartHandler>().OrderBy(sp =>sp.currentPartIndex).ToList();
-        private void FindLevelDesign() => _levelDesigner = FindObjectOfType<LevelDesigner>();
+        private void FindSlotObjects() => _slotObjects = FindObjectsOfType<SlotObject>().ToList();
         private void SubscribeBodyPartOnInstantiate() => SnakeBodyPartHandler.OnSnakeBodyInstantiated += AddBodyPartToList;
         private void UnSubscribeBodyPartOnInstantiate() => SnakeBodyPartHandler.OnSnakeBodyInstantiated -= AddBodyPartToList;
+        private void SubscribeSnakeControllerGameOverAction() => _snakeController.GameOverAction += OnGameOver;
+
+        private void UnSubscribeSnakeControllerGameOverAction() => _snakeController.GameOverAction -= OnGameOver;
+        
+        private void OnGameOver()
+        {
+            CancelInvoke();
+        }
+
 
 
         private void AddBodyPartToList(SnakeBodyPartHandler obj)
@@ -52,34 +64,35 @@ namespace SnakeGameScripts.EdibleElements
 
         private void CreateRandomEdibleElement()
         {
-            var randomVector2d = FindProperPositionForEdible();
+            var randomSlot = FindProperPositionForEdible();
+            randomSlot.isEmpty = false;
             Array values = Enum.GetValues(typeof(EdibleElements));
             System.Random random = new System.Random();
             EdibleElements randomEdibleEnum = (EdibleElements)values.GetValue(random.Next(values.Length));
             switch (randomEdibleEnum)
             {
                 case EdibleElements.IncreaseSpeed:
-                    var edibleIncreaseSpeed =  Instantiate(edibleElementInstance, new Vector3(randomVector2d.x, 0.1f, randomVector2d.y),edibleElementInstance.transform.rotation);
+                    var edibleIncreaseSpeed =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
                     edibleIncreaseSpeed.AddComponent<IncreaseSnakeLenghtEdible>();
                     _edibleElements.Add(edibleIncreaseSpeed.gameObject);
                     break;
                 case EdibleElements.DecreaseSpeed:
-                    var edibleDecreaseSpeed =  Instantiate(edibleElementInstance, new Vector3(randomVector2d.x, 0.1f, randomVector2d.y),edibleElementInstance.transform.rotation);
+                    var edibleDecreaseSpeed =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
                     edibleDecreaseSpeed.AddComponent<DecreaseSnakeLenghtEdible>();
                     _edibleElements.Add(edibleDecreaseSpeed.gameObject);
                     break;
                 case EdibleElements.SlowDownSnake:
-                    var edibleSlowDownSnake =  Instantiate(edibleElementInstance, new Vector3(randomVector2d.x, 0.1f, randomVector2d.y),edibleElementInstance.transform.rotation);
+                    var edibleSlowDownSnake =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
                     edibleSlowDownSnake.AddComponent<SlowDownSnakeEdible>();
                     _edibleElements.Add(edibleSlowDownSnake.gameObject);
                     break;
                 case EdibleElements.SpeedUpSnake:
-                    var edibleSpeedUpSnake =  Instantiate(edibleElementInstance, new Vector3(randomVector2d.x, 0.1f, randomVector2d.y),edibleElementInstance.transform.rotation);
+                    var edibleSpeedUpSnake =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
                     edibleSpeedUpSnake.AddComponent<SpeedUpSnakeEdible>();
                     _edibleElements.Add(edibleSpeedUpSnake.gameObject);
                     break;
                 case EdibleElements.ReverseSnake:
-                    var edibleReverseSnake =  Instantiate(edibleElementInstance, new Vector3(randomVector2d.x, 0.1f, randomVector2d.y),edibleElementInstance.transform.rotation);
+                    var edibleReverseSnake =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
                     edibleReverseSnake.AddComponent<ReverseSneakEdible>();
                     _edibleElements.Add(edibleReverseSnake.gameObject);
                     break;
@@ -89,42 +102,17 @@ namespace SnakeGameScripts.EdibleElements
             
         }
 
-        private Vector2 FindProperPositionForEdible()
+        private SlotObject FindProperPositionForEdible()
         {
-            var inSlotGameobjectPoints = new List<Vector2>();
-            List<GameObject> inSlotGameobjects = new List<GameObject>();
-            _snakeBodyPartHandlers.ForEach(x=> inSlotGameobjects.Add(x.gameObject));
-            _edibleElements.ForEach(x=> inSlotGameobjects.Add(x.gameObject));
-            inSlotGameobjects.Add(_snakeHeadPartHandler.gameObject);
-            
-            for (int i = 0; i < inSlotGameobjects.Count; i++)
-            {
-                inSlotGameobjectPoints.Add(new Vector2(inSlotGameobjects[i].transform.position.x, inSlotGameobjects[i].transform.position.z));
-            }
-
-            var randomVector2d = GetRandomPosition();
-            foreach (var sneakPartPoint in inSlotGameobjectPoints)
-            {
-                while (sneakPartPoint.Equals(randomVector2d))
-                {
-                    randomVector2d = GetRandomPosition();
-                }
-            }
-            return randomVector2d;
-        }
-
-        private Vector2 GetRandomPosition()
-        {
-            var randomVector2d = new Vector2(0, 0);
-            var randomX = Random.Range(-_levelDesigner.playAreaWidth/2+1,_levelDesigner.playAreaWidth/2-1);
-            var randomZ = Random.Range(-_levelDesigner.playAreaHeight/2+1,_levelDesigner.playAreaHeight/2-1);
-            randomVector2d = new Vector2(randomX, randomZ);
-            return randomVector2d;
+            var emptySlots = _slotObjects.Where(s => s.isEmpty).ToList();
+            var random = UnityEngine.Random.Range(0, emptySlots.Count - 1);
+            return emptySlots[random];
         }
 
         private void OnDestroy()
         {
             UnSubscribeBodyPartOnInstantiate();
+            UnSubscribeSnakeControllerGameOverAction();
         }
     }
 }

@@ -1,28 +1,9 @@
-using UnityEngine;
+using SnakeGameScripts.Generic;
 
 namespace SnakeGameScripts.EdibleElements
 {
-    public class EdibleElementBase : MonoBehaviour
+    public class EdibleElementBase : ObjectColorHandler
     {
-        protected virtual void Awake()
-        {
-            
-        }
-
-        [SerializeField]
-        protected Color partColor;
-    
-        protected virtual void OnEnable()
-        {
-            OnEnableSetColor();
-        }
-
-
-        protected virtual void OnEnableSetColor()
-        {
-            var mat = GetComponent<MeshRenderer>().material;
-            mat.color = partColor;
-        }
-
+        
     }
 }

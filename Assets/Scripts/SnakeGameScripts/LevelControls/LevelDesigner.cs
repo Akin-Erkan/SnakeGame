@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SnakeGameScripts.LevelControls
@@ -9,85 +10,47 @@ namespace SnakeGameScripts.LevelControls
         [Range(8,64)]
         public int playAreaHeight = 32;
 
-        [HideInInspector]
-        public float leftBorderRestrictionPoint;
-        [HideInInspector]
-        public float rightBorderRestrictionPoint;
-        [HideInInspector]
-        public float upperBorderRestrictionPoint;
-        [HideInInspector]
-        public float lowerBorderRestrictionPoint;
-
-
+        public List<BorderObject> borderList = new();
+        public List<SlotObject> slotList = new();
         [SerializeField] 
         private GameObject borderParent;
         [SerializeField] 
-        private GameObject borderGameObject;
-    
+        private BorderObject borderGameObject;
+        [SerializeField]
+        private GameObject slotParent;
+        [SerializeField] 
+        private SlotObject slotGameObject;
+        
         void Awake()
         {
-            CreateBorders();
+            CreateLevel();
         }
+        
 
-        private void CreateBorders()
+        private void CreateLevel()
         {
-            CreateLeftVerticalBorder();
-            CreateRightVerticalBorder();
-            CreateUpperHorizontalBorder();
-            CreateLowerHorizontalBorder();
+            for (int i = 0; i < playAreaWidth ; i++)
+            {
+                for (int j = 0; j < playAreaHeight ; j++)
+                {
+                    if (i == 0 || i == playAreaWidth - 1 || j==0 || j == playAreaHeight-1)
+                    {
+                        var borderGameobject = Instantiate(borderGameObject, new Vector3(i,0f,j),borderGameObject.transform.rotation,borderParent.transform);
+                        borderGameobject.borderPoint = new Vector2(i, j);
+                        borderGameobject.name = "Border " + i + " - " + j;
+                        borderList.Add(borderGameobject);
+                    }
+                    else
+                    {
+                        var slotGameobject = Instantiate(slotGameObject, new Vector3(i,0f,j),slotGameObject.transform.rotation,slotParent.transform);
+                        slotGameobject.slotPoint = new Vector2(i, j);
+                        slotGameobject.name = "Slot " + i + " - " + j;
+                        slotList.Add(slotGameobject);
+                    }
+                }
+            }
         }
-
-        private void CreateLeftVerticalBorder()
-        {
-            leftBorderRestrictionPoint = -playAreaWidth / 2;
-            for (int i = 0; i < playAreaHeight/2+1; i++)
-            {
-                Instantiate(borderGameObject, new Vector3(leftBorderRestrictionPoint,0.1f,i),borderGameObject.transform.rotation,borderParent.transform);
-            } 
-            for (int i = 0; i < playAreaHeight/2+1; i++)
-            {
-                Instantiate(borderGameObject, new Vector3(leftBorderRestrictionPoint,0.1f,-i),borderGameObject.transform.rotation,borderParent.transform);
-            } 
-        }
-    
-        private void CreateRightVerticalBorder()
-        {
-            rightBorderRestrictionPoint = playAreaWidth / 2;
-            for (int i = 0; i < playAreaHeight/2+1; i++)
-            {
-                Instantiate(borderGameObject, new Vector3(rightBorderRestrictionPoint,0.1f,i),borderGameObject.transform.rotation,borderParent.transform);
-            } 
-            for (int i = 0; i < playAreaHeight/2+1; i++)
-            {
-                Instantiate(borderGameObject, new Vector3(rightBorderRestrictionPoint,0.1f,-i),borderGameObject.transform.rotation,borderParent.transform);
-            } 
-        }
-    
-        private void CreateUpperHorizontalBorder()
-        {
-            upperBorderRestrictionPoint = playAreaHeight / 2;
-            for (int i = 0; i < playAreaWidth/2; i++)
-            {
-                Instantiate(borderGameObject, new Vector3(i,0.1f,upperBorderRestrictionPoint),borderGameObject.transform.rotation,borderParent.transform);
-            } 
-            for (int i = 0; i < playAreaWidth/2; i++)
-            {
-                Instantiate(borderGameObject, new Vector3(-i,0.1f,upperBorderRestrictionPoint),borderGameObject.transform.rotation,borderParent.transform);
-            } 
-        }
-    
-        private void CreateLowerHorizontalBorder()
-        {
-            lowerBorderRestrictionPoint = -playAreaHeight / 2;
-            for (int i = 0; i < playAreaWidth/2; i++)
-            {
-                Instantiate(borderGameObject, new Vector3(i,0.1f,lowerBorderRestrictionPoint),borderGameObject.transform.rotation,borderParent.transform);
-            } 
-            for (int i = 0; i < playAreaWidth/2; i++)
-            {
-                Instantiate(borderGameObject, new Vector3(-i,0.1f,lowerBorderRestrictionPoint),borderGameObject.transform.rotation,borderParent.transform);
-            } 
-        }
+        
     
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using SnakeGameScripts.SnakeScripts;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,6 +28,26 @@ namespace SnakeGameScripts.InputScripts
         private void Awake()
         {
             SubscribeToActionsWithButtons();
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                OnUpButtonClick();
+            }
+            if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                OnLeftButtonClick();
+            }
+            if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                OnDownButtonClick();
+            }
+            if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                OnRightButtonClick();
+            }
         }
 
         private void SubscribeToActionsWithButtons()

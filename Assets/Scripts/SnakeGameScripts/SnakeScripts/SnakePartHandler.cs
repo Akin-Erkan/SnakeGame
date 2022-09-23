@@ -1,29 +1,9 @@
-using UnityEngine;
+using SnakeGameScripts.Generic;
 
 namespace SnakeGameScripts.SnakeScripts
 {
-    public class SnakePartHandler : MonoBehaviour
+    public class SnakePartHandler : ObjectColorHandler
     {
-        protected virtual void Awake()
-        {
-            
-        }
-
-        [SerializeField]
-        protected Color partColor;
-    
-        protected virtual void OnEnable()
-        {
-            OnEnableSetColor();
-        }
-
-        /// <summary>
-        /// We are setting body color whenever enabled because we need to change head and tail in gameplay.
-        /// </summary>
-        protected virtual void OnEnableSetColor()
-        {
-            var mat = GetComponent<MeshRenderer>().material;
-            mat.color = partColor;
-        }
+        
     }
 }

@@ -1,10 +1,11 @@
 using System;
 using System.Collections;
-using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using SnakeGameScripts.EdibleElements;
 using SnakeGameScripts.InputScripts;
 using SnakeGameScripts.LevelControls;
+using UnityEngine;
 
 namespace SnakeGameScripts.SnakeScripts
 {
@@ -17,6 +18,8 @@ namespace SnakeGameScripts.SnakeScripts
             West,
             East
         }
+
+        public Action GameOverAction;
         
         [SerializeField]
         private Direction movementStartDirection = Direction.East;
@@ -30,6 +33,10 @@ namespace SnakeGameScripts.SnakeScripts
         private LevelDesigner _levelDesigner;
 
         private float _currentSnakeSpeed = 0.25f;
+        private float _originalSnakeSpeed = 0.25f;
+        [SerializeField]
+        private float _tempSpeedUpTime = 2f;
+        
         
         private void Awake()
         {
@@ -39,6 +46,8 @@ namespace SnakeGameScripts.SnakeScripts
             FindLevelDesign();
             SetStartBodyDirections(movementStartDirection);
             SubscribeToMovementInputs();
+            SubscribeToHeadPartActions();
+            SubscribeToBodyPartActions();
         }
 
         private void Start()
@@ -67,7 +76,107 @@ namespace SnakeGameScripts.SnakeScripts
                 _movementInputHandler.OnRightDirectionButtonClickEvent += SetHeadDirection;
             }
         }
-        
+        private void SubscribeToHeadPartActions()
+        {
+            if (_snakeHeadPartHandler)
+            {
+                _snakeHeadPartHandler.OnIncreaseSnakeLenghtEdible += OnIncreaseSnakeLenghtEdible;
+                _snakeHeadPartHandler.OnDecreaseSnakeLenghtEdible += OnDecreaseSnakeLenghtEdible;
+                _snakeHeadPartHandler.OnReverseSneakEdible += OnReverseSneakEdible;
+                _snakeHeadPartHandler.OnSlowDownSnakeEdible += OnSlowDownSnakeEdible;
+                _snakeHeadPartHandler.OnSpeedUpSnakeEdible += OnSpeedUpSnakeEdible;
+                _snakeHeadPartHandler.OnGameOver += OnGameOver;
+            }
+        }
+
+        private void OnGameOver()
+        {
+            GameOverAction?.Invoke();
+            StopAllCoroutines();
+        }
+
+        private void SubscribeToBodyPartActions() => SnakeBodyPartHandler.OnSnakeBodyInstantiated += AddBodyPartToList;
+        private void UnSubscribeToBodyPartActions() => SnakeBodyPartHandler.OnSnakeBodyInstantiated -= AddBodyPartToList;
+
+
+        private void AddBodyPartToList(SnakeBodyPartHandler obj)
+        {
+            if(!_snakeBodyPartHandlers.Contains(obj))
+                _snakeBodyPartHandlers.Add(obj);
+        }
+
+        private void OnSpeedUpSnakeEdible(SpeedUpSnakeEdible obj)
+        {
+            StartCoroutine(OnSpeedUpSnakeEdibleCoroutine());
+            Destroy(obj.gameObject);
+        }
+
+        private IEnumerator OnSpeedUpSnakeEdibleCoroutine()
+        {
+            _currentSnakeSpeed /= 2;
+            print("Current Snake Speed: " + _currentSnakeSpeed);
+            yield return new WaitForSeconds(_tempSpeedUpTime);
+            _currentSnakeSpeed = _originalSnakeSpeed;
+        }
+
+        private void OnSlowDownSnakeEdible(SlowDownSnakeEdible obj)
+        {
+            StartCoroutine(OnSlowDownSnakeEdibleCoroutine());
+            Destroy(obj.gameObject);
+        }
+
+        private IEnumerator OnSlowDownSnakeEdibleCoroutine()
+        {
+            _currentSnakeSpeed *= 2;
+            print("Current Snake Speed: " + _currentSnakeSpeed);
+            yield return new WaitForSeconds(_tempSpeedUpTime);
+            _currentSnakeSpeed = _originalSnakeSpeed;
+        }
+
+        private void OnReverseSneakEdible(ReverseSneakEdible obj)
+        {
+            var transform1 = _snakeHeadPartHandler.transform;
+            (transform1.position, _snakeBodyPartHandlers[^1].transform.position) = (_snakeBodyPartHandlers[^1].transform.position, transform1.position);
+            ReverseHeadDirection();
+            ReverseBodyParts();
+            Destroy(obj.gameObject);
+        }
+
+        private void ReverseBodyParts() => _snakeBodyPartHandlers.Reverse();
+
+        private void ReverseHeadDirection()
+        {
+            if (_headDirection == Direction.East)
+                SetHeadDirection(Direction.West);
+            if (_headDirection == Direction.West)
+                SetHeadDirection(Direction.East);
+            if (_headDirection == Direction.North)
+                SetHeadDirection(Direction.South);
+            if (_headDirection == Direction.South)
+                SetHeadDirection(Direction.North);
+        }
+
+        private void OnDecreaseSnakeLenghtEdible(DecreaseSnakeLenghtEdible obj)
+        {
+            var snakeBodyPartHandler = _snakeBodyPartHandlers[^1];
+            _snakeBodyPartHandlers.Remove(snakeBodyPartHandler);
+            Destroy(snakeBodyPartHandler.gameObject);
+            Destroy(obj.gameObject);
+            if (_snakeBodyPartHandlers.Count < 2)
+            {
+                OnGameOver();
+            }
+        }
+
+        private void OnIncreaseSnakeLenghtEdible(IncreaseSnakeLenghtEdible obj)
+        {
+            var directionOfTail = _snakeBodyPartHandlers[^2].transform.position - _snakeBodyPartHandlers[^1].transform.position;
+            var snakeBodyPartHandler = Instantiate(_snakeBodyPartHandlers[^1],_snakeBodyPartHandlers[^1].transform.position - directionOfTail,_snakeBodyPartHandlers[^1].transform.rotation,_snakeBodyPartHandlers[^1].transform.parent);
+            snakeBodyPartHandler.currentPartIndex = _snakeBodyPartHandlers[^1].currentPartIndex + 1;
+            Destroy(obj.gameObject);
+        }
+
+
         private void UnSubscribeToMovementInputs()
         {
             if (_movementInputHandler)
@@ -78,9 +187,32 @@ namespace SnakeGameScripts.SnakeScripts
                 _movementInputHandler.OnRightDirectionButtonClickEvent -= SetHeadDirection;
             }
         }
+        
+        private void UnSubscribeToHeadPartActions()
+        {
+            if (_snakeHeadPartHandler)
+            {
+                _snakeHeadPartHandler.OnIncreaseSnakeLenghtEdible -= OnIncreaseSnakeLenghtEdible;
+                _snakeHeadPartHandler.OnDecreaseSnakeLenghtEdible -= OnDecreaseSnakeLenghtEdible;
+                _snakeHeadPartHandler.OnReverseSneakEdible -= OnReverseSneakEdible;
+                _snakeHeadPartHandler.OnSlowDownSnakeEdible -= OnSlowDownSnakeEdible;
+                _snakeHeadPartHandler.OnSpeedUpSnakeEdible -= OnSpeedUpSnakeEdible;
+                _snakeHeadPartHandler.OnGameOver -= OnGameOver;
+            }
+        }
 
         private void SetHeadDirection(Direction headMovementDirection)
         {
+            if (headMovementDirection == _headDirection)
+                return;
+            if(headMovementDirection == Direction.East && _headDirection == Direction.West)
+                return;
+            if(headMovementDirection == Direction.West && _headDirection == Direction.East)
+                return;
+            if(headMovementDirection == Direction.North && _headDirection == Direction.South)
+                return;
+            if(headMovementDirection == Direction.South && _headDirection == Direction.North)
+                return;
             _headDirection = headMovementDirection;
         }
 
@@ -92,36 +224,46 @@ namespace SnakeGameScripts.SnakeScripts
             {
                 for (int i = _snakeBodyPartHandlers.Count-1; i > 0; i--)
                 {
+                    if(_snakeBodyPartHandlers[i] == null)
+                        continue;
                     _snakeBodyPartHandlers[i].transform.position = _snakeBodyPartHandlers[i - 1].transform.position;
                 }
             }
-            if (_snakeBodyPartHandlers[0])
-                _snakeBodyPartHandlers[0].transform.position = _snakeHeadPartHandler.transform.position;
+
+            if (_snakeBodyPartHandlers.Count > 0)
+            {
+                if (_snakeBodyPartHandlers[0])
+                    _snakeBodyPartHandlers[0].transform.position = _snakeHeadPartHandler.transform.position;   
+            }
+
+            var firstBorderTransform = _levelDesigner.borderList[0].transform;
+            var lastBorderTransform = _levelDesigner.borderList[^1].transform;
+            var snakeTransform = _snakeHeadPartHandler.transform;
             switch (_headDirection)
             {
                 case Direction.South:
-                    if ((Math.Abs(_snakeHeadPartHandler.transform.position.z - _levelDesigner.lowerBorderRestrictionPoint) < 1.25f))
-                        _snakeHeadPartHandler.transform.position = new Vector3(_snakeHeadPartHandler.transform.position.x, _snakeHeadPartHandler.transform.position.y, _levelDesigner.upperBorderRestrictionPoint - 1);
+                    if ((Math.Abs(_snakeHeadPartHandler.transform.position.z - firstBorderTransform.position.z) < 1.25f))
+                        snakeTransform.position = new Vector3(snakeTransform.position.x, snakeTransform.position.y, lastBorderTransform.position.z - 1);
                     else
-                        _snakeHeadPartHandler.transform.position += Vector3.back;
+                        snakeTransform.position += Vector3.back;
                     break;
                 case Direction.North:
-                    if ((Math.Abs(_snakeHeadPartHandler.transform.position.z - _levelDesigner.upperBorderRestrictionPoint) < 1.25f))
-                        _snakeHeadPartHandler.transform.position = new Vector3(_snakeHeadPartHandler.transform.position.x,  _snakeHeadPartHandler.transform.position.y, _levelDesigner.lowerBorderRestrictionPoint + 1);
+                    if ((Math.Abs(snakeTransform.position.z - lastBorderTransform.position.z) < 1.25f))
+                        snakeTransform.position = new Vector3(snakeTransform.position.x,  snakeTransform.position.y, firstBorderTransform.position.z + 1);
                     else
-                        _snakeHeadPartHandler.transform.position += Vector3.forward;                    
+                        snakeTransform.position += Vector3.forward;                    
                     break;
                 case Direction.West:
-                    if (Math.Abs(_snakeHeadPartHandler.transform.position.x - _levelDesigner.leftBorderRestrictionPoint) < 1.25f)
-                        _snakeHeadPartHandler.transform.position = new Vector3(_levelDesigner.rightBorderRestrictionPoint-1, _snakeHeadPartHandler.transform.position.y, _snakeHeadPartHandler.transform.position.z);
+                    if (Math.Abs(snakeTransform.position.x - firstBorderTransform.position.x) < 1.25f)
+                        snakeTransform.position = new Vector3(lastBorderTransform.position.x -1, snakeTransform.position.y, snakeTransform.position.z);
                     else
-                        _snakeHeadPartHandler.transform.position += Vector3.left;                    
+                        snakeTransform.position += Vector3.left;                    
                     break;
                 case Direction.East:
-                    if (Math.Abs(_snakeHeadPartHandler.transform.position.x - _levelDesigner.rightBorderRestrictionPoint) < 1.25f)
-                        _snakeHeadPartHandler.transform.position = new Vector3(_levelDesigner.leftBorderRestrictionPoint+1, _snakeHeadPartHandler.transform.position.y, _snakeHeadPartHandler.transform.position.z);
+                    if (Math.Abs(snakeTransform.position.x - lastBorderTransform.position.x) < 1.25f)
+                        snakeTransform.position = new Vector3(firstBorderTransform.transform.position.x +1, snakeTransform.position.y, snakeTransform.position.z);
                     else
-                        _snakeHeadPartHandler.transform.position += Vector3.right;                       
+                        snakeTransform.position += Vector3.right;                       
                     break;
             }
 
@@ -131,6 +273,8 @@ namespace SnakeGameScripts.SnakeScripts
         private void OnDestroy()
         {
             UnSubscribeToMovementInputs();
+            UnSubscribeToHeadPartActions();
+            UnSubscribeToBodyPartActions();
             StopAllCoroutines();
         }
     }
