@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using SnakeGameScripts.LevelControls;
@@ -18,15 +17,6 @@ namespace SnakeGameScripts.EdibleElements
         private GameObject edibleParent;
 
         private SnakeController _snakeController;
-        
-        private enum EdibleElements
-        {
-            IncreaseSpeed,
-            DecreaseSpeed,
-            SlowDownSnake,
-            SpeedUpSnake,
-            ReverseSnake
-        }
 
         private void Start()
         {
@@ -35,7 +25,7 @@ namespace SnakeGameScripts.EdibleElements
             FindSlotObjects();
             SubscribeBodyPartOnInstantiate();
             SubscribeSnakeControllerGameOverAction();
-            InvokeRepeating(nameof(CreateRandomEdibleElement),2f,5f);
+            InvokeRepeating(nameof(CreateRandomEdibleElement),2f,2f);
         }
         
 
@@ -66,40 +56,9 @@ namespace SnakeGameScripts.EdibleElements
         {
             var randomSlot = FindProperPositionForEdible();
             randomSlot.isEmpty = false;
-            Array values = Enum.GetValues(typeof(EdibleElements));
-            System.Random random = new System.Random();
-            EdibleElements randomEdibleEnum = (EdibleElements)values.GetValue(random.Next(values.Length));
-            switch (randomEdibleEnum)
-            {
-                case EdibleElements.IncreaseSpeed:
-                    var edibleIncreaseSpeed =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
-                    edibleIncreaseSpeed.AddComponent<IncreaseSnakeLenghtEdible>();
-                    _edibleElements.Add(edibleIncreaseSpeed.gameObject);
-                    break;
-                case EdibleElements.DecreaseSpeed:
-                    var edibleDecreaseSpeed =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
-                    edibleDecreaseSpeed.AddComponent<DecreaseSnakeLenghtEdible>();
-                    _edibleElements.Add(edibleDecreaseSpeed.gameObject);
-                    break;
-                case EdibleElements.SlowDownSnake:
-                    var edibleSlowDownSnake =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
-                    edibleSlowDownSnake.AddComponent<SlowDownSnakeEdible>();
-                    _edibleElements.Add(edibleSlowDownSnake.gameObject);
-                    break;
-                case EdibleElements.SpeedUpSnake:
-                    var edibleSpeedUpSnake =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
-                    edibleSpeedUpSnake.AddComponent<SpeedUpSnakeEdible>();
-                    _edibleElements.Add(edibleSpeedUpSnake.gameObject);
-                    break;
-                case EdibleElements.ReverseSnake:
-                    var edibleReverseSnake =  Instantiate(edibleElementInstance, new Vector3(randomSlot.transform.position.x, 0.1f, randomSlot.transform.position.z),edibleElementInstance.transform.rotation,edibleParent.transform);
-                    edibleReverseSnake.AddComponent<ReverseSneakEdible>();
-                    _edibleElements.Add(edibleReverseSnake.gameObject);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-            
+            var edibleFactory = FindObjectOfType<EdibleElementFactory>();
+            if (edibleFactory)
+                _edibleElements.Add(edibleFactory.CreateRandomEdibleElement(edibleElementInstance, edibleParent.transform, randomSlot.transform.position));
         }
 
         private SlotObject FindProperPositionForEdible()
